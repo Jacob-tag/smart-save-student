@@ -5,18 +5,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { transactions, formatZAR, CATEGORY_COLORS, type Category } from "@/lib/mock-data";
+import { formatZAR, CATEGORY_COLORS, type Category } from "@/lib/mock-data";
 import { Search, Filter, Download, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useFinance } from "@/context/FinanceContext";
 
 const CATEGORIES: Category[] = ["Food", "Transport", "Rent", "Airtime", "Entertainment", "School", "Personal", "Income"];
 
 const Transactions = () => {
+  const { transactions, addTransaction } = useFinance();
   const [type, setType] = useState<"expense" | "income">("expense");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
+
+  // Form state
+  const today = new Date().toISOString().slice(0, 10);
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState<Category>("Food");
+  const [description, setDescription] = useState("");
+  const [method, setMethod] = useState<"Card" | "Cash" | "EFT" | "App">("Card");
+  const [date, setDate] = useState(today);
 
   const filtered = transactions.filter((t) => {
     const q = query.toLowerCase();
@@ -24,6 +34,33 @@ const Transactions = () => {
     const matchesFilter = filter === "all" || t.category === filter;
     return matchesQuery && matchesFilter;
   });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = parseFloat(amount);
+    if (!value || value <= 0) {
+      toast.error("Enter a valid amount");
+      return;
+    }
+    if (!description.trim()) {
+      toast.error("Add a short description");
+      return;
+    }
+    const finalCategory: Category = type === "income" ? "Income" : category;
+    addTransaction({
+      date,
+      description: description.trim().slice(0, 80),
+      category: finalCategory,
+      amount: value,
+      type,
+      method,
+    });
+    toast.success("Transaction saved", {
+      description: `${type === "income" ? "+" : "−"} ${formatZAR(value)} · ${finalCategory}`,
+    });
+    setAmount("");
+    setDescription("");
+  };
 
   return (
     <AppShell title="Income & Expenses" subtitle="Track every rand in and out">
@@ -33,7 +70,7 @@ const Transactions = () => {
           <h3 className="font-display font-bold text-lg mb-1">Add transaction</h3>
           <p className="text-sm text-muted-foreground mb-5">Log a new income or expense</p>
 
-          <Tabs value={type} onValueChange={(v) => setType(v as any)} className="mb-4">
+          <Tabs value={type} onValueChange={(v) => setType(v as "expense" | "income")} className="mb-4">
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="expense" className="gap-2">
                 <ArrowUpCircle className="h-4 w-4" /> Expense
@@ -44,42 +81,56 @@ const Transactions = () => {
             </TabsList>
           </Tabs>
 
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              toast.success("Transaction saved", { description: "Your entry has been recorded." });
-            }}
-          >
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
               <Label htmlFor="amount">Amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">R</span>
-                <Input id="amount" type="number" placeholder="0.00" className="pl-7 text-lg font-semibold h-11" />
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="pl-7 text-lg font-semibold h-11"
+                  required
+                />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Category</Label>
-              <Select defaultValue="Food">
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {type === "expense" && (
+              <div className="space-y-1.5">
+                <Label>Category</Label>
+                <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
+                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.filter((c) => c !== "Income").map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="desc">Description</Label>
-              <Input id="desc" placeholder="e.g. Groceries at Checkers" className="h-11" />
+              <Input
+                id="desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Groceries at Checkers"
+                maxLength={80}
+                className="h-11"
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Payment</Label>
-                <Select defaultValue="Card">
+                <Select value={method} onValueChange={(v) => setMethod(v as typeof method)}>
                   <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Card">Card</SelectItem>
@@ -91,7 +142,7 @@ const Transactions = () => {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" className="h-11" defaultValue="2025-06-22" />
+                <Input id="date" type="date" className="h-11" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
             </div>
 

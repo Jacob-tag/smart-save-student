@@ -1,16 +1,21 @@
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { budgets, formatZAR, CATEGORY_COLORS } from "@/lib/mock-data";
+import { formatZAR, CATEGORY_COLORS } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFinance } from "@/context/FinanceContext";
+import { toast } from "sonner";
 
 const Budget = () => {
+  const { budgets, setBudgetTotal } = useFinance();
   const total = budgets.reduce((s, b) => s + b.allocated, 0);
   const spent = budgets.reduce((s, b) => s + b.spent, 0);
   const remaining = total - spent;
-  const pct = Math.round((spent / total) * 100);
+  const pct = total > 0 ? Math.round((spent / total) * 100) : 0;
+  const [draftTotal, setDraftTotal] = useState<number>(total);
 
   return (
     <AppShell title="Budget Planner" subtitle="Plan, allocate, and stay on track">
@@ -38,14 +43,29 @@ const Budget = () => {
 
           <form
             className="card-elevated p-6 space-y-4"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!draftTotal || draftTotal <= 0) {
+                toast.error("Enter a valid total");
+                return;
+              }
+              setBudgetTotal(draftTotal);
+              toast.success("Budget updated", { description: `New monthly total: ${formatZAR(draftTotal)}` });
+            }}
           >
             <h3 className="font-display font-bold text-lg">Set monthly budget</h3>
             <div className="space-y-1.5">
               <Label htmlFor="total">Total amount</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">R</span>
-                <Input id="total" type="number" defaultValue={total} className="pl-7 h-11 font-semibold" />
+                <Input
+                  id="total"
+                  type="number"
+                  min="0"
+                  value={draftTotal}
+                  onChange={(e) => setDraftTotal(parseFloat(e.target.value) || 0)}
+                  className="pl-7 h-11 font-semibold"
+                />
               </div>
             </div>
             <Button type="submit" className="w-full h-11">Update budget</Button>
