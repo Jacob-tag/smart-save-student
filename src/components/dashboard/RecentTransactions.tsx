@@ -1,9 +1,10 @@
-import { transactions, formatZAR, CATEGORY_COLORS } from "@/lib/mock-data";
+import { formatZAR, CATEGORY_COLORS } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useFinance } from "@/context/FinanceContext";
 
 interface Props {
   limit?: number;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function RecentTransactions({ limit = 7, showHeader = true }: Props) {
+  const { transactions } = useFinance();
   const items = transactions.slice(0, limit);
 
   return (

@@ -1,7 +1,9 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { CATEGORY_COLORS, categorySpend, formatZAR } from "@/lib/mock-data";
+import { CATEGORY_COLORS, formatZAR } from "@/lib/mock-data";
+import { useCategorySpend } from "@/context/FinanceContext";
 
 export function CategoryChart() {
+  const categorySpend = useCategorySpend();
   const total = categorySpend.reduce((s, c) => s + c.value, 0);
 
   return (

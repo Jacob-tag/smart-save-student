@@ -24,7 +24,7 @@ const Login = () => {
             className="mt-8 space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              navigate("/");
+              navigate("/dashboard");
             }}
           >
             <div className="space-y-1.5">
