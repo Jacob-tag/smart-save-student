@@ -1,9 +1,11 @@
 import { Target, ChevronRight } from "lucide-react";
-import { goals, formatZAR } from "@/lib/mock-data";
+import { formatZAR } from "@/lib/mock-data";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
+import { useFinance } from "@/context/FinanceContext";
 
 export function GoalsPreview() {
+  const { goals } = useFinance();
   return (
     <div className="card-elevated p-5 lg:p-6">
       <div className="flex items-start justify-between mb-5">

@@ -1,8 +1,9 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { monthlyTrend } from "@/lib/mock-data";
 import { formatZAR } from "@/lib/mock-data";
+import { useMonthlyTrend } from "@/context/FinanceContext";
 
 export function SpendingChart() {
+  const monthlyTrend = useMonthlyTrend();
   return (
     <div className="card-elevated p-5 lg:p-6 h-full">
       <div className="flex items-start justify-between mb-4">

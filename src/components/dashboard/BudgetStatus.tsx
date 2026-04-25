@@ -1,9 +1,10 @@
 import { AlertTriangle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { budgets, formatZAR, CATEGORY_COLORS } from "@/lib/mock-data";
+import { formatZAR, CATEGORY_COLORS } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { useFinance } from "@/context/FinanceContext";
 
 export function BudgetStatus() {
+  const { budgets } = useFinance();
   return (
     <div className="card-elevated p-5 lg:p-6">
       <div className="flex items-start justify-between mb-5">
