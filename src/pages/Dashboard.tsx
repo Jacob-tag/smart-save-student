@@ -8,9 +8,12 @@ import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { ArrowDownCircle, ArrowUpCircle, PiggyBank, Wallet } from "lucide-react";
 import { formatZAR } from "@/lib/mock-data";
 import { useFinance, useMonthlyTrend } from "@/context/FinanceContext";
+import { useAuth } from "@/context/AuthContext";
 
 const Dashboard = () => {
   const { totalIncome, totalExpenses, balance, savingsProgress } = useFinance();
+  const { profile, user } = useAuth();
+  const firstName = (profile?.full_name || user?.email?.split("@")[0] || "there").split(" ")[0];
   const trend = useMonthlyTrend();
 
   // Compose tiny sparklines from the trend
