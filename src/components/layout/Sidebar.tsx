@@ -45,13 +45,13 @@ export function Sidebar() {
 
       <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
         <Avatar className="h-9 w-9">
-          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">TM</AvatarFallback>
+          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">Thando Mokoena</div>
-          <div className="truncate text-xs text-muted-foreground">UCT • 3rd Year</div>
+          <div className="truncate text-sm font-semibold">{name}</div>
+          <div className="truncate text-xs text-muted-foreground">{subtitle}</div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sign out">
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sign out" onClick={handleSignOut}>
           <LogOut className="h-4 w-4" />
         </Button>
       </div>
