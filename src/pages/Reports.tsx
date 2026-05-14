@@ -1,16 +1,10 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
-import { monthlyTrend, formatZAR, summary, budgets, goals } from "@/lib/mock-data";
+import { formatZAR } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, FileSpreadsheet, TrendingUp, TrendingDown, Target, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
-
-const reportCards = [
-  { label: "Expense summary", value: formatZAR(summary.expenses), sub: "−3.1% vs last month", icon: TrendingDown, tone: "warm" },
-  { label: "Income summary", value: formatZAR(summary.income), sub: "+8.4% vs last month", icon: TrendingUp, tone: "success" },
-  { label: "Budget performance", value: `${Math.round((budgets.reduce((s, b) => s + b.spent, 0) / budgets.reduce((s, b) => s + b.allocated, 0)) * 100)}%`, sub: "of total budget used", icon: Target, tone: "primary" },
-  { label: "Savings performance", value: `${Math.round((goals.reduce((s, g) => s + g.saved, 0) / goals.reduce((s, g) => s + g.target, 0)) * 100)}%`, sub: "of all goals reached", icon: PiggyBank, tone: "warning" },
-];
+import { useFinance, useMonthlyTrend } from "@/context/FinanceContext";
 
 const TONE: Record<string, string> = {
   primary: "bg-primary/10 text-primary",
@@ -20,6 +14,16 @@ const TONE: Record<string, string> = {
 };
 
 const Reports = () => {
+  const { totalIncome, totalExpenses, budgets, savingsProgress } = useFinance();
+  const monthlyTrend = useMonthlyTrend();
+  const budgetAlloc = budgets.reduce((s, b) => s + b.allocated, 0);
+  const budgetSpent = budgets.reduce((s, b) => s + b.spent, 0);
+  const reportCards = [
+    { label: "Expense summary", value: formatZAR(totalExpenses), sub: "this period", icon: TrendingDown, tone: "warm" },
+    { label: "Income summary", value: formatZAR(totalIncome), sub: "this period", icon: TrendingUp, tone: "success" },
+    { label: "Budget performance", value: budgetAlloc > 0 ? `${Math.round((budgetSpent / budgetAlloc) * 100)}%` : "—", sub: "of total budget used", icon: Target, tone: "primary" },
+    { label: "Savings performance", value: `${savingsProgress}%`, sub: "of all goals reached", icon: PiggyBank, tone: "warning" },
+  ];
   return (
     <AppShell title="Reports & Analytics" subtitle="Insights to help you spend smarter">
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
