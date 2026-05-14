@@ -129,9 +129,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         description: data.description,
         category: data.category as Category,
         amount: Number(data.amount),
-        type: data.type,
-        method: data.method,
-        status: data.status,
+        type: data.type as Transaction["type"],
+        method: data.method as Transaction["method"],
+        status: data.status as Transaction["status"],
       }, ...prev]);
     }
   };
