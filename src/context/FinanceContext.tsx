@@ -166,7 +166,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     if (!error && data) {
       setGoals((prev) => [...prev, {
         id: data.id, name: data.name, target: Number(data.target), saved: Number(data.saved),
-        deadline: data.deadline ?? "", priority: data.priority, monthly: Number(data.monthly),
+        deadline: data.deadline ?? "", priority: data.priority as Goal["priority"], monthly: Number(data.monthly),
       }]);
     }
   };
