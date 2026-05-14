@@ -14,7 +14,216 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      budgets_v2: {
+        Row: {
+          allocated: number
+          category: string
+          created_at: string
+          id: string
+          period: string
+          user_id: string
+        }
+        Insert: {
+          allocated?: number
+          category: string
+          created_at?: string
+          id?: string
+          period?: string
+          user_id: string
+        }
+        Update: {
+          allocated?: number
+          category?: string
+          created_at?: string
+          id?: string
+          period?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fixed_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          day_of_month: number | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          day_of_month?: number | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          day_of_month?: number | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals_v2: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          id: string
+          monthly: number
+          name: string
+          priority: string
+          saved: number
+          target: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          monthly?: number
+          name: string
+          priority?: string
+          saved?: number
+          target?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          monthly?: number
+          name?: string
+          priority?: string
+          saved?: number
+          target?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      income_sources: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_amount: number
+          name: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_amount?: number
+          name: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_amount?: number
+          name?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          country: string | null
+          course: string | null
+          created_at: string
+          currency: string
+          full_name: string | null
+          id: string
+          notif_budget_alerts: boolean
+          notif_goal_milestones: boolean
+          notif_weekly_summary: boolean
+          onboarded_at: string | null
+          payday: number | null
+          university: string | null
+          updated_at: string
+          year_of_study: string | null
+        }
+        Insert: {
+          country?: string | null
+          course?: string | null
+          created_at?: string
+          currency?: string
+          full_name?: string | null
+          id: string
+          notif_budget_alerts?: boolean
+          notif_goal_milestones?: boolean
+          notif_weekly_summary?: boolean
+          onboarded_at?: string | null
+          payday?: number | null
+          university?: string | null
+          updated_at?: string
+          year_of_study?: string | null
+        }
+        Update: {
+          country?: string | null
+          course?: string | null
+          created_at?: string
+          currency?: string
+          full_name?: string | null
+          id?: string
+          notif_budget_alerts?: boolean
+          notif_goal_milestones?: boolean
+          notif_weekly_summary?: boolean
+          onboarded_at?: string | null
+          payday?: number | null
+          university?: string | null
+          updated_at?: string
+          year_of_study?: string | null
+        }
+        Relationships: []
+      }
+      transactions_v2: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          method: string
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          method?: string
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          method?: string
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
