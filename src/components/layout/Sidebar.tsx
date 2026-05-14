@@ -4,8 +4,17 @@ import { NAV_ITEMS } from "@/lib/nav";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export function Sidebar() {
+  const { profile, user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const name = profile?.full_name || user?.email?.split("@")[0] || "Student";
+  const initials = name.split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "S";
+  const subtitle = [profile?.university, profile?.year_of_study].filter(Boolean).join(" • ") || "Welcome";
+  const handleSignOut = async () => { await signOut(); navigate("/"); };
+
   return (
     <aside className="hidden lg:flex w-[260px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="px-6 py-6">
