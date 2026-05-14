@@ -4,8 +4,17 @@ import { NAV_ITEMS } from "@/lib/nav";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export function Sidebar() {
+  const { profile, user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const name = profile?.full_name || user?.email?.split("@")[0] || "Student";
+  const initials = name.split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "S";
+  const subtitle = [profile?.university, profile?.year_of_study].filter(Boolean).join(" • ") || "Welcome";
+  const handleSignOut = async () => { await signOut(); navigate("/"); };
+
   return (
     <aside className="hidden lg:flex w-[260px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="px-6 py-6">
@@ -36,13 +45,13 @@ export function Sidebar() {
 
       <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
         <Avatar className="h-9 w-9">
-          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">TM</AvatarFallback>
+          <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">Thando Mokoena</div>
-          <div className="truncate text-xs text-muted-foreground">UCT • 3rd Year</div>
+          <div className="truncate text-sm font-semibold">{name}</div>
+          <div className="truncate text-xs text-muted-foreground">{subtitle}</div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sign out">
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sign out" onClick={handleSignOut}>
           <LogOut className="h-4 w-4" />
         </Button>
       </div>

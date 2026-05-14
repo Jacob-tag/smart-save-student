@@ -2,11 +2,48 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { toast } from "sonner";
 
 const Register = () => {
   const navigate = useNavigate();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirm) return toast.error("Passwords don't match");
+    if (password.length < 6) return toast.error("Password must be at least 6 characters");
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/onboarding`,
+        data: { full_name: fullName },
+      },
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    if (data.session) {
+      toast.success("Account created!");
+      navigate("/onboarding");
+    } else {
+      toast.success("Check your email to confirm your account");
+    }
+  };
+
+  const handleGoogle = async () => {
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/onboarding" });
+    if (result.error) toast.error("Could not sign up with Google");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-10 bg-background gradient-hero">
       <div className="w-full max-w-md card-elevated p-8 lg:p-10 animate-scale-in">
@@ -16,53 +53,32 @@ const Register = () => {
           <p className="text-sm text-muted-foreground mt-1">Join thousands of students mastering their money.</p>
         </div>
 
-        <form
-          className="mt-6 space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            navigate("/dashboard");
-          }}
-        >
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
             <Label htmlFor="rname">Full name</Label>
-            <Input id="rname" placeholder="Thando Mokoena" className="h-11" required />
+            <Input id="rname" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Thando Mokoena" className="h-11" required />
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="remail">Email</Label>
-            <Input id="remail" type="email" placeholder="you@university.ac.za" className="h-11" required />
+            <Input id="remail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ac.za" className="h-11" required />
           </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select defaultValue="undergrad">
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="undergrad">Undergraduate</SelectItem>
-                  <SelectItem value="postgrad">Postgraduate</SelectItem>
-                  <SelectItem value="college">College</SelectItem>
-                  <SelectItem value="highschool">High school</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="uni">University</Label>
-              <Input id="uni" placeholder="UCT" className="h-11" />
-            </div>
-          </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="rpw">Password</Label>
-            <Input id="rpw" type="password" placeholder="••••••••" className="h-11" required />
+            <Input id="rpw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-11" required />
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="rcpw">Confirm password</Label>
-            <Input id="rcpw" type="password" placeholder="••••••••" className="h-11" required />
+            <Input id="rcpw" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" className="h-11" required />
           </div>
 
-          <Button type="submit" className="w-full h-11 shadow-soft mt-2">Create account</Button>
+          <Button type="submit" disabled={loading} className="w-full h-11 shadow-soft mt-2">
+            {loading ? "Creating account…" : "Create account"}
+          </Button>
+
+          <Button type="button" onClick={handleGoogle} variant="outline" className="w-full h-11 gap-2">
+            <svg className="h-4 w-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
