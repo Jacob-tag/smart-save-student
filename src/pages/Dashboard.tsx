@@ -23,7 +23,7 @@ const Dashboard = () => {
   const savingsSpark = trend.map((_, i) => ({ v: i + 1 }));
 
   return (
-    <AppShell title="Welcome back, Thando 👋" subtitle="Here's how your money is doing this month">
+    <AppShell title={`Welcome back, ${firstName} 👋`} subtitle="Here's how your money is doing this month">
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label="Total income"
