@@ -1,11 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
-import {
-  transactions as seedTransactions,
-  budgets as seedBudgets,
-  goals as seedGoals,
-  type Transaction,
-  type Category,
-} from "@/lib/mock-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import type { Category, Transaction } from "@/lib/mock-data";
 
 export interface Budget {
   category: Category;
@@ -27,73 +23,78 @@ interface FinanceState {
   transactions: Transaction[];
   budgets: Budget[];
   goals: Goal[];
+  loading: boolean;
   totalIncome: number;
   totalExpenses: number;
   balance: number;
   totalSaved: number;
   totalSavingsTarget: number;
   savingsProgress: number;
-  addTransaction: (t: Omit<Transaction, "id" | "status"> & { status?: Transaction["status"] }) => void;
-  setBudgetTotal: (total: number) => void;
-  addGoal: (g: Omit<Goal, "id" | "saved">) => void;
-  contributeToGoal: (id: string, amount: number) => void;
-  reset: () => void;
+  addTransaction: (t: Omit<Transaction, "id" | "status"> & { status?: Transaction["status"] }) => Promise<void>;
+  setBudgetTotal: (total: number) => Promise<void>;
+  addGoal: (g: Omit<Goal, "id" | "saved">) => Promise<void>;
+  contributeToGoal: (id: string, amount: number) => Promise<void>;
+  refresh: () => Promise<void>;
 }
-
-const STORAGE_KEY = "stipend.finance.v1";
 
 const FinanceContext = createContext<FinanceState | null>(null);
 
-interface PersistShape {
-  transactions: Transaction[];
-  budgets: Budget[];
-  goals: Goal[];
-}
-
-function load(): PersistShape {
-  if (typeof window === "undefined") {
-    return { transactions: seedTransactions, budgets: seedBudgets, goals: seedGoals };
-  }
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { transactions: seedTransactions, budgets: seedBudgets, goals: seedGoals };
-    const parsed = JSON.parse(raw) as PersistShape;
-    return {
-      transactions: parsed.transactions ?? seedTransactions,
-      budgets: parsed.budgets ?? seedBudgets,
-      goals: parsed.goals ?? seedGoals,
-    };
-  } catch {
-    return { transactions: seedTransactions, budgets: seedBudgets, goals: seedGoals };
-  }
-}
-
 export function FinanceProvider({ children }: { children: ReactNode }) {
-  const initial = load();
-  const [transactions, setTransactions] = useState<Transaction[]>(initial.transactions);
-  const [budgets, setBudgets] = useState<Budget[]>(initial.budgets);
-  const [goals, setGoals] = useState<Goal[]>(initial.goals);
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgetRows, setBudgetRows] = useState<{ id: string; category: Category; allocated: number }[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Persist
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ transactions, budgets, goals } satisfies PersistShape),
-    );
-  }, [transactions, budgets, goals]);
+  const refresh = useCallback(async () => {
+    if (!user) {
+      setTransactions([]); setBudgetRows([]); setGoals([]);
+      return;
+    }
+    setLoading(true);
+    const [tx, bg, gl] = await Promise.all([
+      supabase.from("transactions_v2").select("*").order("date", { ascending: false }),
+      supabase.from("budgets_v2").select("*"),
+      supabase.from("goals_v2").select("*").order("created_at", { ascending: true }),
+    ]);
+    if (tx.data) {
+      setTransactions(tx.data.map((r: any) => ({
+        id: r.id,
+        date: r.date,
+        description: r.description,
+        category: r.category as Category,
+        amount: Number(r.amount),
+        type: r.type,
+        method: r.method,
+        status: r.status,
+      })));
+    }
+    if (bg.data) setBudgetRows(bg.data.map((r: any) => ({ id: r.id, category: r.category as Category, allocated: Number(r.allocated) })));
+    if (gl.data) {
+      setGoals(gl.data.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        target: Number(r.target),
+        saved: Number(r.saved),
+        deadline: r.deadline ?? "",
+        priority: r.priority,
+        monthly: Number(r.monthly),
+      })));
+    }
+    setLoading(false);
+  }, [user]);
 
-  // Recompute budget "spent" from transactions for current month-ish (just by category over all txns we have)
-  useEffect(() => {
-    setBudgets((prev) =>
-      prev.map((b) => {
-        const spent = transactions
-          .filter((t) => t.type === "expense" && t.category === b.category)
-          .reduce((s, t) => s + t.amount, 0);
-        return { ...b, spent };
-      }),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions.length]);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  // Compute spent per category from transactions
+  const budgets: Budget[] = useMemo(() => {
+    return budgetRows.map((b) => {
+      const spent = transactions
+        .filter((t) => t.type === "expense" && t.category === b.category)
+        .reduce((s, t) => s + t.amount, 0);
+      return { category: b.category, allocated: b.allocated, spent };
+    });
+  }, [budgetRows, transactions]);
 
   const totals = useMemo(() => {
     const totalIncome = transactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
@@ -105,50 +106,86 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return { totalIncome, totalExpenses, balance, totalSaved, totalSavingsTarget, savingsProgress };
   }, [transactions, goals]);
 
-  const addTransaction = useCallback<FinanceState["addTransaction"]>((t) => {
-    const tx: Transaction = {
-      id: `t${Date.now()}`,
-      status: t.status ?? "Cleared",
-      ...t,
-    } as Transaction;
-    setTransactions((prev) => [tx, ...prev]);
-  }, []);
-
-  const setBudgetTotal = useCallback((total: number) => {
-    setBudgets((prev) => {
-      const currentTotal = prev.reduce((s, b) => s + b.allocated, 0) || 1;
-      const ratio = total / currentTotal;
-      return prev.map((b) => ({ ...b, allocated: Math.round(b.allocated * ratio) }));
-    });
-  }, []);
-
-  const addGoal = useCallback<FinanceState["addGoal"]>((g) => {
-    setGoals((prev) => [...prev, { ...g, id: `g${Date.now()}`, saved: 0 }]);
-  }, []);
-
-  const contributeToGoal = useCallback((id: string, amount: number) => {
-    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, saved: Math.min(g.target, g.saved + amount) } : g)));
-  }, []);
-
-  const reset = useCallback(() => {
-    setTransactions(seedTransactions);
-    setBudgets(seedBudgets);
-    setGoals(seedGoals);
-  }, []);
-
-  const value: FinanceState = {
-    transactions,
-    budgets,
-    goals,
-    ...totals,
-    addTransaction,
-    setBudgetTotal,
-    addGoal,
-    contributeToGoal,
-    reset,
+  const addTransaction: FinanceState["addTransaction"] = async (t) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("transactions_v2")
+      .insert({
+        user_id: user.id,
+        date: t.date,
+        description: t.description,
+        category: t.category,
+        amount: t.amount,
+        type: t.type,
+        method: t.method,
+        status: t.status ?? "Cleared",
+      })
+      .select()
+      .single();
+    if (!error && data) {
+      setTransactions((prev) => [{
+        id: data.id,
+        date: data.date,
+        description: data.description,
+        category: data.category as Category,
+        amount: Number(data.amount),
+        type: data.type,
+        method: data.method,
+        status: data.status,
+      }, ...prev]);
+    }
   };
 
-  return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
+  const setBudgetTotal: FinanceState["setBudgetTotal"] = async (total) => {
+    if (!user || budgetRows.length === 0) return;
+    const currentTotal = budgetRows.reduce((s, b) => s + b.allocated, 0) || 1;
+    const ratio = total / currentTotal;
+    const updates = budgetRows.map((b) => ({ ...b, allocated: Math.round(b.allocated * ratio) }));
+    setBudgetRows(updates);
+    await Promise.all(
+      updates.map((b) =>
+        supabase.from("budgets_v2").update({ allocated: b.allocated }).eq("id", b.id),
+      ),
+    );
+  };
+
+  const addGoal: FinanceState["addGoal"] = async (g) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("goals_v2")
+      .insert({
+        user_id: user.id,
+        name: g.name,
+        target: g.target,
+        deadline: g.deadline || null,
+        priority: g.priority,
+        monthly: g.monthly,
+      })
+      .select()
+      .single();
+    if (!error && data) {
+      setGoals((prev) => [...prev, {
+        id: data.id, name: data.name, target: Number(data.target), saved: Number(data.saved),
+        deadline: data.deadline ?? "", priority: data.priority, monthly: Number(data.monthly),
+      }]);
+    }
+  };
+
+  const contributeToGoal: FinanceState["contributeToGoal"] = async (id, amount) => {
+    const goal = goals.find((g) => g.id === id);
+    if (!goal || !user) return;
+    const newSaved = Math.min(goal.target, goal.saved + amount);
+    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, saved: newSaved } : g)));
+    await supabase.from("goals_v2").update({ saved: newSaved }).eq("id", id);
+  };
+
+  return (
+    <FinanceContext.Provider
+      value={{ transactions, budgets, goals, loading, ...totals, addTransaction, setBudgetTotal, addGoal, contributeToGoal, refresh }}
+    >
+      {children}
+    </FinanceContext.Provider>
+  );
 }
 
 export function useFinance() {
@@ -157,7 +194,6 @@ export function useFinance() {
   return ctx;
 }
 
-// Build last-6-months trend from transactions
 export function useMonthlyTrend() {
   const { transactions } = useFinance();
   return useMemo(() => {
