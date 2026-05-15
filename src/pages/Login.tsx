@@ -46,10 +46,15 @@ const Login = () => {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ac.za" className="h-12" required />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-12" required />
-            </div>
+            <PasswordInput
+              id="password"
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="h-12"
+              required
+            />
 
             <Button type="submit" disabled={loading} className="w-full h-12 text-base shadow-glow">
               {loading ? "Signing in…" : "Sign in"}
