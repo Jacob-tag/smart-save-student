@@ -58,14 +58,24 @@ const Register = () => {
             <Label htmlFor="remail">Email</Label>
             <Input id="remail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ac.za" className="h-11" required />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="rpw">Password</Label>
-            <Input id="rpw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-11" required />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="rcpw">Confirm password</Label>
-            <Input id="rcpw" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" className="h-11" required />
-          </div>
+          <PasswordInput
+            id="rpw"
+            label="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className="h-11"
+            required
+          />
+          <PasswordInput
+            id="rcpw"
+            label="Confirm password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="••••••••"
+            className="h-11"
+            required
+          />
 
           <Button type="submit" disabled={loading} className="w-full h-11 shadow-soft mt-2">
             {loading ? "Creating account…" : "Create account"}
