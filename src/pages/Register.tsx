@@ -31,12 +31,8 @@ const Register = () => {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    if (data.session) {
-      toast.success("Account created!");
-      navigate("/onboarding");
-    } else {
-      toast.success("Check your email to confirm your account");
-    }
+    toast.success("Account created!");
+    navigate("/onboarding");
   };
 
   const handleGoogle = async () => {
