@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { GraduationCap, Lock, LogOut, Mail, Moon } from "lucide-react";
+import { PasswordInput } from "@/components/PasswordInput";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -99,14 +100,8 @@ const Settings = () => {
           <form className="card-elevated p-6 space-y-4" onSubmit={(e) => { e.preventDefault(); toast.success("Password updated"); }}>
             <h3 className="font-display font-bold text-lg">Change password</h3>
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="cp">Current password</Label>
-                <Input id="cp" type="password" className="h-11" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="np">New password</Label>
-                <Input id="np" type="password" className="h-11" />
-              </div>
+              <PasswordInput id="cp" label="Current password" className="h-11" />
+              <PasswordInput id="np" label="New password" className="h-11" />
             </div>
             <Button type="submit" variant="outline">Update password</Button>
           </form>

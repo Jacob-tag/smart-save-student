@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
 import { ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+import { PasswordInput } from "@/components/PasswordInput";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -45,10 +46,15 @@ const Login = () => {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@university.ac.za" className="h-12" required />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-12" required />
-            </div>
+            <PasswordInput
+              id="password"
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="h-12"
+              required
+            />
 
             <Button type="submit" disabled={loading} className="w-full h-12 text-base shadow-glow">
               {loading ? "Signing in…" : "Sign in"}
