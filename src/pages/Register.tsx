@@ -21,11 +21,10 @@ const Register = () => {
     if (password !== confirm) return toast.error("Passwords don't match");
     if (password.length < 6) return toast.error("Password must be at least 6 characters");
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/onboarding`,
         data: { full_name: fullName },
       },
     });
