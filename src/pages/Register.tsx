@@ -21,22 +21,17 @@ const Register = () => {
     if (password !== confirm) return toast.error("Passwords don't match");
     if (password.length < 6) return toast.error("Password must be at least 6 characters");
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/onboarding`,
         data: { full_name: fullName },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    if (data.session) {
-      toast.success("Account created!");
-      navigate("/onboarding");
-    } else {
-      toast.success("Check your email to confirm your account");
-    }
+    toast.success("Account created!");
+    navigate("/onboarding");
   };
 
   const handleGoogle = async () => {
